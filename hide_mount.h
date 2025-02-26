@@ -1,5 +1,5 @@
-#define TARGET_PATH_NUM 2
-#define MAX_PATH_LEN 100
+#define TARGET_PATH_NUM 3
+#define MAX_PATH_LEN 80
 
 struct seq_file {
 	char *buf;

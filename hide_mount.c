@@ -36,11 +36,10 @@ void before_show_vfsmnt(hook_fargs2_t *args, void *udata){
         if(current&&!(get_task_mm(current))){
             return;
         }
+        struct seq_file* b_seq_file;
+        b_seq_file = args->arg0;
+        args->local.data0 = b_seq_file->count;
     }
-
-    struct seq_file* b_seq_file;
-    b_seq_file = args->arg0;
-    args->local.data0 = b_seq_file->count;
 }
 
 void after_show_vfsmnt(hook_fargs2_t *args, void *udata){
@@ -56,7 +55,7 @@ void after_show_vfsmnt(hook_fargs2_t *args, void *udata){
         memcpy(lstr,o_seq_file->buf+bcount,llen);
         for(int i=0;i<TARGET_PATH_NUM;i++){
             if(unlikely(strstr(lstr,target_path[i]))){
-                logkd("test_log:%d %d %s\n",bcount,o_seq_file->count,lstr);
+                logkd("hide mount:%s\n",lstr);
                 o_seq_file->count = bcount;
                 break;
             }
@@ -67,13 +66,14 @@ void after_show_vfsmnt(hook_fargs2_t *args, void *udata){
 
 static long hide_mount_init(const char *args, const char *event, void *__user reserved)
 {
-    strcpy(target_path[0],"/data/adb/modules");
-    strcpy(target_path[1],"/debug_ramdisk");
+    strcpy(target_path[0],"/debug_ramdisk");
+    strcpy(target_path[1],"/apex/com.android.art/bin/dex2oat64");
+    strcpy(target_path[2],"/apex/com.android.art/bin/dex2oat32");
     get_task_mm = (typeof(get_task_mm))kallsyms_lookup_name("get_task_mm");
     show_vfsmnt_addr = kallsyms_lookup_name("show_vfsmnt");
     show_mountinfo_addr = kallsyms_lookup_name("show_mountinfo");
     show_vfsstat_addr = kallsyms_lookup_name("show_vfsstat");
-    logkd("show_vfsmnt_addr:%llx,show_mountinfo_addr:llx,show_vfsstat_addr:llx\n",show_vfsmnt_addr,show_mountinfo_addr,show_vfsstat_addr);
+    logkd("show_vfsmnt_addr:%llx,show_mountinfo_addr:%llx,show_vfsstat_addr:%llx\n",show_vfsmnt_addr,show_mountinfo_addr,show_vfsstat_addr);
     if(show_vfsmnt_addr){
         hook_wrap2((void *)show_vfsmnt_addr,before_show_vfsmnt,after_show_vfsmnt,0);
     }
